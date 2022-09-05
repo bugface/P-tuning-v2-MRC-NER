@@ -3,10 +3,10 @@
 
 
 FILE=conll03_cased_large
-REPO_PATH=/home/alex/workspace/py3/P-tuning-MRC-NER/mrc4ner
+REPO_PATH=/data/datasets/hexing/alexgre/mrc_ner/mrc4ner
 export PYTHONPATH="$PYTHONPATH:$REPO_PATH"
 
-ROOT=/home/alex/workspace/py3/P-tuning-MRC-NER
+ROOT=/data/datasets/hexing/alexgre/mrc_ner
 
 DATA_DIR=${ROOT}/mrc4ner/datasets/conll03/
 # mimiciii-bert-large-uncased_5e_128b
@@ -42,7 +42,7 @@ python ${REPO_PATH}/train/mrc_ner_trainer.py \
 --bert_config_dir ${BERT_DIR} \
 --max_length ${MAX_LEN} \
 --batch_size ${BATCH} \
---gpus="-1" \
+--gpus="1" \
 --precision=${PREC} \
 --progress_bar_refresh_rate 1 \
 --lr ${LR} \

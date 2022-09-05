@@ -149,6 +149,7 @@ class BertPrefixQueryNER(BertPreTrainedModel):
         self.hidden_size = config.hidden_size
 
         self.pre_seq_len = config.pre_seq_len
+        
         self.n_layer = config.num_hidden_layers
         self.n_head = config.num_attention_heads
         self.n_embd = config.hidden_size // config.num_attention_heads

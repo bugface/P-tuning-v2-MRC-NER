@@ -214,7 +214,9 @@ class BertLabeling(pl.LightningModule):
             )
         else:
             optimizer = SGD(optimizer_grouped_parameters, lr=self.args.lr, momentum=0.9)
+
         num_gpus = len([x for x in str(self.args.gpus).split(",") if x.strip()])
+
         t_total = (
             len(self.train_dataloader())
             // (self.args.accumulate_grad_batches * num_gpus)
@@ -527,12 +529,10 @@ class BertLabeling(pl.LightningModule):
         load_mmap_dataset
         """
         json_path = os.path.join(self.data_dir, f"mrc-ner.{prefix}")
-        # vocab_path = os.path.join(self.bert_dir, "vocab.txt")
+        vocab_path = os.path.join(self.bert_dir, "vocab.txt")
         dataset = MRCNERDataset(
             json_path=json_path,
-            tokenizer=BertTokenizer.from_pretrained(
-                self.bert_dir
-            ),  # BertWordPieceTokenizer(vocab_path),
+            tokenizer=BertWordPieceTokenizer(vocab_path),
             max_length=self.args.max_length,
             is_chinese=self.chinese,
             pad_to_maxlen=False,
