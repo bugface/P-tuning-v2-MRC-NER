@@ -26,9 +26,12 @@ from transformers import (
 )
 from torch.optim import SGD
 
-from datasets.mrc_ner_dataset import MRCNERDataset
+from datasets.mrc_ner_dataset import MRCNERDataset, MRCNERDatasetPtuning
 from datasets.truncate_dataset import TruncateDataset
-from datasets.collate_functions import collate_to_max_length
+from datasets.collate_functions import (
+    collate_to_max_length,
+    collate_to_max_length_ptuning,
+)
 from metrics.query_span_f1 import QuerySpanF1
 from models.bert_query_ner import (
     BertQueryNER,
@@ -78,6 +81,7 @@ class BertLabeling(pl.LightningModule):
             mrc_dropout=args.mrc_dropout,
             classifier_act_func=args.classifier_act_func,
             classifier_intermediate_hidden_size=args.classifier_intermediate_hidden_size,
+            pre_seq_len=args.prefix_len,
         )
 
         if self.args.model_type == "bert":
@@ -90,13 +94,13 @@ class BertLabeling(pl.LightningModule):
             )
         elif self.args.model_type == "pbert":
             # add pre_seq_len
-            bert_config.pre_seq_len = args.pre_seq_len
+            bert_config.pre_seq_len = args.prefix_len
             self.model = BertPrefixQueryNER.from_pretrained(
                 args.bert_config_dir, config=bert_config
             )
         elif self.args.model_type == "pmegatron":
             # add pre_seq_len
-            bert_config.pre_seq_len = args.pre_seq_len
+            bert_config.pre_seq_len = args.prefix_len
             self.model = MegatronPrefixQueryNER.from_pretrained(
                 args.bert_config_dir, config=bert_config
             )
@@ -174,6 +178,7 @@ class BertLabeling(pl.LightningModule):
         parser.add_argument("--lr_scheduler", type=str, default="onecycle")
         parser.add_argument("--lr_mini", type=float, default=-1)
         parser.add_argument("--freeze", type=int, default=1)
+        parser.add_argument("--prefix_len", type=int, default=32)
 
         return parser
 
@@ -530,24 +535,43 @@ class BertLabeling(pl.LightningModule):
         """
         json_path = os.path.join(self.data_dir, f"mrc-ner.{prefix}")
         vocab_path = os.path.join(self.bert_dir, "vocab.txt")
-        dataset = MRCNERDataset(
-            json_path=json_path,
-            tokenizer=BertWordPieceTokenizer(vocab_path),
-            max_length=self.args.max_length,
-            is_chinese=self.chinese,
-            pad_to_maxlen=False,
-        )
 
-        if limit is not None:
-            dataset = TruncateDataset(dataset, limit)
+        if self.args.model_type in {"pbert", "pmegatron"}:
+            dataset = MRCNERDatasetPtuning(
+                json_path=json_path,
+                tokenizer=BertWordPieceTokenizer(vocab_path),
+                max_length=self.args.max_length,
+                is_chinese=self.chinese,
+                pad_to_maxlen=False,
+                query_len=self.args.prefix_len,
+            )
 
-        dataloader = DataLoader(
-            dataset=dataset,
-            batch_size=self.args.batch_size,
-            num_workers=self.args.workers,
-            shuffle=True if prefix == "train" else False,
-            collate_fn=collate_to_max_length,
-        )
+            dataloader = DataLoader(
+                dataset=dataset,
+                batch_size=self.args.batch_size,
+                num_workers=self.args.workers,
+                shuffle=True if prefix == "train" else False,
+                collate_fn=collate_to_max_length_ptuning,
+            )
+        else:
+            dataset = MRCNERDataset(
+                json_path=json_path,
+                tokenizer=BertWordPieceTokenizer(vocab_path),
+                max_length=self.args.max_length,
+                is_chinese=self.chinese,
+                pad_to_maxlen=False,
+            )
+
+            if limit is not None:
+                dataset = TruncateDataset(dataset, limit)
+
+            dataloader = DataLoader(
+                dataset=dataset,
+                batch_size=self.args.batch_size,
+                num_workers=self.args.workers,
+                shuffle=True if prefix == "train" else False,
+                collate_fn=collate_to_max_length,
+            )
 
         return dataloader
 
