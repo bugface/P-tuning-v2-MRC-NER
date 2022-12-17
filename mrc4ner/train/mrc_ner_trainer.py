@@ -82,6 +82,7 @@ class BertLabeling(pl.LightningModule):
             classifier_act_func=args.classifier_act_func,
             classifier_intermediate_hidden_size=args.classifier_intermediate_hidden_size,
             pre_seq_len=args.prefix_len,
+            prefix_projection=args.prefix_projection,
         )
 
         if self.args.model_type == "bert":
@@ -95,12 +96,16 @@ class BertLabeling(pl.LightningModule):
         elif self.args.model_type == "pbert":
             # add pre_seq_len
             bert_config.pre_seq_len = args.prefix_len
+            bert_config.prefix_projection = args.prefix_projection
+            bert_config.prefix_emb_dim = args.prefix_len * args.total_category
             self.model = BertPrefixQueryNER.from_pretrained(
                 args.bert_config_dir, config=bert_config
             )
         elif self.args.model_type == "pmegatron":
             # add pre_seq_len
             bert_config.pre_seq_len = args.prefix_len
+            bert_config.prefix_projection = args.prefix_projection
+            bert_config.prefix_emb_dim = args.prefix_len * args.total_category
             self.model = MegatronPrefixQueryNER.from_pretrained(
                 args.bert_config_dir, config=bert_config
             )
@@ -179,6 +184,8 @@ class BertLabeling(pl.LightningModule):
         parser.add_argument("--lr_mini", type=float, default=-1)
         parser.add_argument("--freeze", type=int, default=1)
         parser.add_argument("--prefix_len", type=int, default=32)
+        parser.add_argument("--total_category", type=int, default=4)
+        parser.add_argument("--prefix_projection", type=bool, default=False)
 
         return parser
 
@@ -254,9 +261,9 @@ class BertLabeling(pl.LightningModule):
             raise ValueError
         return [optimizer], [{"scheduler": scheduler, "interval": "step"}]
 
-    def forward(self, input_ids, attention_mask, token_type_ids):
+    def forward(self, input_ids, attention_mask, token_type_ids, prompts=None):
         return self.model(
-            input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids
+            input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, prompts=prompts
         )
 
     def compute_loss(
@@ -345,7 +352,9 @@ class BertLabeling(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         tf_board_logs = {"lr": self.trainer.optimizers[0].param_groups[0]["lr"]}
+        
         (
+            prefix,
             tokens,
             token_type_ids,
             start_labels,
@@ -360,7 +369,7 @@ class BertLabeling(pl.LightningModule):
         # num_tasks * [bsz, length, num_labels]
         attention_mask = (tokens != 0).long()
         start_logits, end_logits, span_logits = self(
-            tokens, attention_mask, token_type_ids
+            tokens, attention_mask, token_type_ids, prompts=prefix
         )
 
         start_loss, end_loss, match_loss = self.compute_loss(
@@ -390,6 +399,7 @@ class BertLabeling(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         output = {}
         (
+            prefix,
             tokens,
             token_type_ids,
             start_labels,
@@ -403,7 +413,7 @@ class BertLabeling(pl.LightningModule):
 
         attention_mask = (tokens != 0).long()
         start_logits, end_logits, span_logits = self(
-            tokens, attention_mask, token_type_ids
+            tokens, attention_mask, token_type_ids, prompts=prefix
         )
 
         start_loss, end_loss, match_loss = self.compute_loss(
@@ -470,6 +480,7 @@ class BertLabeling(pl.LightningModule):
         """"""
         output = {}
         (
+            prefix,
             tokens,
             token_type_ids,
             start_labels,
@@ -483,7 +494,7 @@ class BertLabeling(pl.LightningModule):
 
         attention_mask = (tokens != 0).long()
         start_logits, end_logits, span_logits = self(
-            tokens, attention_mask, token_type_ids
+            tokens, attention_mask, token_type_ids, prompts=prefix
         )
 
         start_preds, end_preds = start_logits > 0, end_logits > 0

@@ -241,7 +241,7 @@ class MRCNERDatasetPtuning(Dataset):
         data = self.all_data[item]
         tokenizer = self.tokenizer
 
-        qas_id = data.get("qas_id", "0.0")
+        qas_id = data.get("qas_id", "0.1")
         sample_idx, label_idx = qas_id.split(".")
         sample_idx = torch.LongTensor([int(sample_idx)])
         label_idx = torch.LongTensor([int(label_idx)])

@@ -22,7 +22,9 @@ LR_MINI=5e-6
 LR_SCHEDULER=linear
 SPAN_WEIGHT=0.1
 WARMUP=0
-MAX_LEN=512
+# prefix_len + MAX_LEN = 512
+prefix_len=32
+MAX_LEN=480
 MAX_NORM=1.0
 MAX_EPOCH=5
 INTER_HIDDEN=2048
@@ -37,35 +39,35 @@ OUTPUT_DIR=${OUTPUT_BASE}/conll03
 mkdir -p ${OUTPUT_DIR}
 
 
-python ${REPO_PATH}/train/mrc_ner_trainer.py \
---model_type bert \
---data_dir ${DATA_DIR} \
---bert_config_dir ${BERT_DIR} \
---max_length ${MAX_LEN} \
---batch_size ${BATCH} \
---gpus="1" \
---precision=${PREC} \
---progress_bar_refresh_rate 1 \
---lr ${LR} \
---val_check_interval ${VAL_CHECK} \
---accumulate_grad_batches ${GRAD_ACC} \
---default_root_dir ${OUTPUT_DIR} \
---mrc_dropout ${MRC_DROPOUT} \
---bert_dropout ${BERT_DROPOUT} \
---max_epochs ${MAX_EPOCH} \
---span_loss_candidates ${SPAN_CAND} \
---weight_span ${SPAN_WEIGHT} \
---warmup_steps ${WARMUP} \
---distributed_backend=ddp \
---max_length ${MAX_LEN} \
---gradient_clip_val ${MAX_NORM} \
---weight_decay ${WEIGHT_DECAY} \
---optimizer ${OPTIM} \
---lr_scheduler ${LR_SCHEDULER} \
---classifier_intermediate_hidden_size ${INTER_HIDDEN} \
---flat \
---freeze 0 \
---lr_mini ${LR_MINI}
+# python ${REPO_PATH}/train/mrc_ner_trainer.py \
+# --model_type bert \
+# --data_dir ${DATA_DIR} \
+# --bert_config_dir ${BERT_DIR} \
+# --max_length ${MAX_LEN} \
+# --batch_size ${BATCH} \
+# --gpus="1" \
+# --precision=${PREC} \
+# --progress_bar_refresh_rate 1 \
+# --lr ${LR} \
+# --val_check_interval ${VAL_CHECK} \
+# --accumulate_grad_batches ${GRAD_ACC} \
+# --default_root_dir ${OUTPUT_DIR} \
+# --mrc_dropout ${MRC_DROPOUT} \
+# --bert_dropout ${BERT_DROPOUT} \
+# --max_epochs ${MAX_EPOCH} \
+# --span_loss_candidates ${SPAN_CAND} \
+# --weight_span ${SPAN_WEIGHT} \
+# --warmup_steps ${WARMUP} \
+# --distributed_backend=ddp \
+# --max_length ${MAX_LEN} \
+# --gradient_clip_val ${MAX_NORM} \
+# --weight_decay ${WEIGHT_DECAY} \
+# --optimizer ${OPTIM} \
+# --lr_scheduler ${LR_SCHEDULER} \
+# --classifier_intermediate_hidden_size ${INTER_HIDDEN} \
+# --flat \
+# --freeze 0 \
+# --lr_mini ${LR_MINI}
 
 
 # ptuning
@@ -89,6 +91,7 @@ python ${REPO_PATH}/train/mrc_ner_trainer.py \
 --weight_span ${SPAN_WEIGHT} \
 --warmup_steps ${WARMUP} \
 --distributed_backend=ddp \
+--workers=4 \
 --max_length ${MAX_LEN} \
 --gradient_clip_val ${MAX_NORM} \
 --weight_decay ${WEIGHT_DECAY} \
@@ -96,7 +99,8 @@ python ${REPO_PATH}/train/mrc_ner_trainer.py \
 --lr_scheduler ${LR_SCHEDULER} \
 --classifier_intermediate_hidden_size ${INTER_HIDDEN} \
 --flat \
---freeze 1 \
---prefix_len 32 \
+--freeze 0 \
+--prefix_len ${prefix_len} \
+--total_category 4 \
 --lr_mini ${LR_MINI}
 
