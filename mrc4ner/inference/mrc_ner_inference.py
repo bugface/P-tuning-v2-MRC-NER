@@ -46,7 +46,7 @@ def get_dataloader(config, data_prefix="test"):
             is_chinese=config.chinese,
             pad_to_maxlen=False,
         )
-    dataloader = DataLoader(dataset=dataset, batch_size=1, shuffle=False)
+    dataloader = DataLoader(dataset=dataset, batch_size=64, shuffle=False)
     return dataloader, data_tokenizer
 
 
@@ -116,9 +116,9 @@ def main():
         checkpoint_path=args.model_ckpt,
         hparams_file=args.hparams_file,
         map_location=None,
-        batch_size=1,
+        batch_size=32,
         max_length=args.max_length,
-        workers=0,
+        workers=4,
     )
 
     data_loader, data_tokenizer = get_dataloader(args,)
@@ -139,6 +139,7 @@ def main():
         d = dict()
 
         (
+            prefix,
             tokens,
             token_type_ids,
             start_labels,
@@ -152,7 +153,7 @@ def main():
         attention_mask = (tokens != 0).long()
 
         start_logits, end_logits, span_logits = trained_mrc_ner_model.model(
-            tokens, attention_mask=attention_mask, token_type_ids=token_type_ids
+            tokens, attention_mask=attention_mask, token_type_ids=token_type_ids, prompts=prefix
         )
         start_preds, end_preds, span_preds = (
             start_logits > 0,

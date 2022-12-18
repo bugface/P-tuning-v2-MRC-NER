@@ -11,13 +11,13 @@ ROOT=/home/alexgre/projects/2023_projects/mrc_ner_ptuning/mrc4ner
 DATA_DIR=${ROOT}/datasets/conll03/
 
 BERT_DIR=/home/alexgre/projects/transformer_pretrained_models/bert-large-uncased
-OUTPUT_BASE=${ROOT}/test
+OUTPUT_BASE=${ROOT}/expr_bert_conll03
 
 BATCH=4
 GRAD_ACC=1
 BERT_DROPOUT=0.1
 MRC_DROPOUT=0.3
-LR=1e-5
+LR=2e-5
 LR_MINI=5e-6
 LR_SCHEDULER=linear
 SPAN_WEIGHT=0.1

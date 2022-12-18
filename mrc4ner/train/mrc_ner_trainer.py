@@ -677,6 +677,11 @@ def main():
     model.load_state_dict(checkpoint["state_dict"])
     model.result_logger.info("=&" * 20)
 
+    # best_model = model.load_state_dict(checkpoint["state_dict"])
+    model.result_logger.info("Start testing on Test dataset:")
+    trainer.test(ckpt_path="best")
+    model.result_logger.info("=&" * 20)
+
 
 if __name__ == "__main__":
     main()
