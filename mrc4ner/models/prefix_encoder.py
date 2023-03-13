@@ -19,6 +19,7 @@ class PrefixEncoder(torch.nn.Module):
                 torch.nn.Linear(config.prefix_hidden_size, config.num_hidden_layers * 2 * config.hidden_size)
             )
         else:
+            # TODO allow init from existing embeddings
             self.embedding = torch.nn.Embedding(config.prefix_emb_dim, config.num_hidden_layers * 2 * config.hidden_size)
 
     def forward(self, prefix: torch.Tensor):

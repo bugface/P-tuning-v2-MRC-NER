@@ -50,33 +50,52 @@ def get_dataloader(config, data_prefix="test"):
     return dataloader, data_tokenizer
 
 
-def get_query_index_to_label_cate(dataset_sign):
+def get_query_index_to_label_cate(l2i_fn):
+    import json
+    
+    with open(l2i_fn, "r") as f:
+        label2idx = json.load(f)
+    
+    return {v: k for k, v in label2idx}
     # NOTICE: need change if you use other datasets.
     # please notice it should in line with the mrc-ner.test/train/dev json file
-    if dataset_sign == "conll03":
-        return {1: "ORG", 2: "PER", 3: "LOC", 4: "MISC"}
-    elif dataset_sign == "ace04":
-        return {1: "GPE", 2: "ORG", 3: "PER", 4: "FAC", 5: "VEH", 6: "LOC", 7: "WEA"}
-    elif dataset_sign == "sdoh_other":
-        return {
-            1: "TypeLiving",
-            2: "Method",
-            3: "StatusEmploy",
-            4: "Duration",
-            5: "Frequency",
-            6: "StatusTime",
-            7: "Type",
-            8: "Amount",
-            9: "History",
-        }
-    elif dataset_sign == "sdoh_trigger":
-        return {
-            1: "Employment",
-            2: "LivingStatus",
-            3: "Alcohol",
-            4: "Drug",
-            5: "Tobacco",
-        }
+
+    # if dataset_sign == "conll03":
+    #     return {1: "ORG", 2: "PER", 3: "LOC", 4: "MISC"}
+    # elif dataset_sign == "ace04":
+    #     return {1: "GPE", 2: "ORG", 3: "PER", 4: "FAC", 5: "VEH", 6: "LOC", 7: "WEA"}
+    # elif dataset_sign == "sdoh_other":
+    #     return {
+    #         1: "TypeLiving",
+    #         2: "Method",
+    #         3: "StatusEmploy",
+    #         4: "Duration",
+    #         5: "Frequency",
+    #         6: "StatusTime",
+    #         7: "Type",
+    #         8: "Amount",
+    #         9: "History",
+    #     }
+    # elif dataset_sign == "sdoh_trigger":
+    #     return {
+    #         1: "Employment",
+    #         2: "LivingStatus",
+    #         3: "Alcohol",
+    #         4: "Drug",
+    #         5: "Tobacco",
+    #     }
+    # elif dataset_sign == "2018n2c2":
+    #     return {
+    #         1: "TypeLiving",
+    #         2: "Method",
+    #         3: "StatusEmploy",
+    #         4: "Duration",
+    #         5: "Frequency",
+    #         6: "StatusTime",
+    #         7: "Type",
+    #         8: "Amount",
+    #         9: "History",
+    #     }
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -93,16 +112,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--dataset_sign",
         type=str,
-        choices=[
-            "ontonotes4",
-            "msra",
-            "conll03",
-            "ace04",
-            "ace05",
-            "sdoh_trigger",
-            "sdoh_other",
-        ],
-        default="conll03",
+        default="./label2idx.json",
     )
     parser.add_argument("--output_fn", type=str, default="./predict_result.json")
 

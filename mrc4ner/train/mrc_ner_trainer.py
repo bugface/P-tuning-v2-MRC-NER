@@ -5,6 +5,7 @@
 
 import os
 import re
+import json
 import argparse
 import logging
 from collections import namedtuple
@@ -137,6 +138,7 @@ class BertLabeling(pl.LightningModule):
         self.chinese = args.chinese
         self.optimizer = args.optimizer
         self.span_loss_candidates = args.span_loss_candidates
+        self.label2idx = None
 
     @staticmethod
     def add_model_specific_args(parent_parser):
@@ -186,7 +188,7 @@ class BertLabeling(pl.LightningModule):
         parser.add_argument("--prefix_len", type=int, default=32)
         parser.add_argument("--total_category", type=int, default=4)
         parser.add_argument("--prefix_projection", type=bool, default=False)
-
+        
         return parser
 
     def configure_optimizers(self):
@@ -557,6 +559,16 @@ class BertLabeling(pl.LightningModule):
                 query_len=self.args.prefix_len,
             )
 
+            print(dataset.label2idx)
+
+            if prefix == "train":
+                with open(os.path.join(self.args.default_root_dir, "label2idx.json"), "w") as f:
+                    json.dump(dataset.label2idx, f)
+
+            self.label2idx = dataset.label2idx
+            
+            # assert len(self.label2idx) == self.args.total_category
+
             dataloader = DataLoader(
                 dataset=dataset,
                 batch_size=self.args.batch_size,
@@ -673,13 +685,13 @@ def main():
     model.result_logger.info("=&" * 20)
     model.result_logger.info(f"Best F1 on DEV is {best_f1_on_dev}")
     model.result_logger.info(f"Best checkpoint on DEV set is {path_to_best_checkpoint}")
-    checkpoint = torch.load(path_to_best_checkpoint)
-    model.load_state_dict(checkpoint["state_dict"])
+    # checkpoint = torch.load(path_to_best_checkpoint)
+    # model.load_state_dict(checkpoint["state_dict"])
     model.result_logger.info("=&" * 20)
 
     # best_model = model.load_state_dict(checkpoint["state_dict"])
     model.result_logger.info("Start testing on Test dataset:")
-    trainer.test(ckpt_path="best")
+    trainer.test(ckpt_path=path_to_best_checkpoint)
     model.result_logger.info("=&" * 20)
 
 

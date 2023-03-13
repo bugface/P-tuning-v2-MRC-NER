@@ -2,16 +2,18 @@
 # -*- coding: utf-8 -*-
 
 
-FILE=conll03_cased_large
+FILE=expr_conll03_cased_large_bert_freeze
 REPO_PATH=/home/alexgre/projects/2023_projects/mrc_ner_ptuning/mrc4ner
 export PYTHONPATH="$PYTHONPATH:$REPO_PATH"
 
 ROOT=/home/alexgre/projects/2023_projects/mrc_ner_ptuning/mrc4ner
 
 DATA_DIR=${ROOT}/datasets/conll03/
-
+MODEL_TYPE=pbert
 BERT_DIR=/home/alexgre/projects/transformer_pretrained_models/bert-large-uncased
-OUTPUT_BASE=${ROOT}/expr_bert_conll03
+# MODEL_TYPE=pmegatron
+# BERT_DIR=/home/alexgre/projects/transformer_pretrained_models/gatortron-syn-345m_deid_vocab
+OUTPUT_BASE=${ROOT}/$FILE
 
 BATCH=4
 GRAD_ACC=1
@@ -23,10 +25,10 @@ LR_SCHEDULER=linear
 SPAN_WEIGHT=0.1
 WARMUP=0
 # prefix_len + MAX_LEN = 512
-prefix_len=32
-MAX_LEN=480
+prefix_len=64
+MAX_LEN=448
 MAX_NORM=1.0
-MAX_EPOCH=5
+MAX_EPOCH=40
 INTER_HIDDEN=2048
 WEIGHT_DECAY=0.01
 OPTIM=adamw #adamw
@@ -35,7 +37,7 @@ PREC=16
 SPAN_CAND=pred_and_gold
 
 
-OUTPUT_DIR=${OUTPUT_BASE}/conll03
+OUTPUT_DIR=${OUTPUT_BASE}
 mkdir -p ${OUTPUT_DIR}
 
 
@@ -69,15 +71,14 @@ mkdir -p ${OUTPUT_DIR}
 # --freeze 0 \
 # --lr_mini ${LR_MINI}
 
-
 # ptuning
 python ${REPO_PATH}/train/mrc_ner_trainer.py \
---model_type pbert \
+--model_type ${MODEL_TYPE} \
 --data_dir ${DATA_DIR} \
 --bert_config_dir ${BERT_DIR} \
 --max_length ${MAX_LEN} \
 --batch_size ${BATCH} \
---gpus="1" \
+--gpus=1 \
 --precision=${PREC} \
 --progress_bar_refresh_rate 1 \
 --lr ${LR} \
@@ -99,7 +100,7 @@ python ${REPO_PATH}/train/mrc_ner_trainer.py \
 --lr_scheduler ${LR_SCHEDULER} \
 --classifier_intermediate_hidden_size ${INTER_HIDDEN} \
 --flat \
---freeze 0 \
+--freeze 1 \
 --prefix_len ${prefix_len} \
 --total_category 4 \
 --lr_mini ${LR_MINI}

@@ -158,9 +158,6 @@ class BertPrefixQueryNER(BertPreTrainedModel):
         self.init_weights()
 
     def get_prompt(self, prefix_tokens):
-        # prefix_tokens = (
-        #     self.prefix_tokens.unsqueeze(0).expand(batch_size, -1).to(self.bert.device)
-        # )
         past_key_values = self.prefix_encoder(prefix_tokens)
         bsz, seqlen, _ = past_key_values.shape
         past_key_values = past_key_values.view(
@@ -222,7 +219,7 @@ class BertPrefixQueryNER(BertPreTrainedModel):
 
 class MegatronPrefixQueryNER(MegatronBertPreTrainedModel):
     def __init__(self, config):
-        super(MegatronQueryNER, self).__init__(config)
+        super(MegatronPrefixQueryNER, self).__init__(config)
         self.bert = MegatronBertModel(config)
 
         self.start_outputs = nn.Linear(config.hidden_size, 1)
@@ -240,25 +237,22 @@ class MegatronPrefixQueryNER(MegatronBertPreTrainedModel):
         self.n_layer = config.num_hidden_layers
         self.n_head = config.num_attention_heads
         self.n_embd = config.hidden_size // config.num_attention_heads
-        self.prefix_tokens = torch.arange(self.pre_seq_len)
+        # self.prefix_tokens = torch.arange(self.pre_seq_len)
         self.prefix_encoder = PrefixEncoder(config)
 
         self.init_weights()
 
-    def get_prompt(self, batch_size):
-        prefix_tokens = (
-            self.prefix_tokens.unsqueeze(0).expand(batch_size, -1).to(self.bert.device)
-        )
+    def get_prompt(self, prefix_tokens):
         past_key_values = self.prefix_encoder(prefix_tokens)
-        # bsz, seqlen, _ = past_key_values.shape
+        bsz, seqlen, _ = past_key_values.shape
         past_key_values = past_key_values.view(
-            batch_size, self.pre_seq_len, self.n_layer * 2, self.n_head, self.n_embd
+            bsz, seqlen, self.n_layer * 2, self.n_head, self.n_embd
         )
         # past_key_values = self.dropout(past_key_values)
         past_key_values = past_key_values.permute([2, 0, 3, 1, 4]).split(2)
         return past_key_values
 
-    def forward(self, input_ids, token_type_ids=None, attention_mask=None, past_key_values=None):
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, prompts=None):
         """
         Args:
             input_ids: bert input tokens, tensor of shape [seq_len]
@@ -269,9 +263,8 @@ class MegatronPrefixQueryNER(MegatronBertPreTrainedModel):
             end_logits: end/non-end probs of shape [seq_len]
             match_logits: start-end-match probs of shape [seq_len, 1]
         """
-
         batch_size = input_ids.shape[0]
-        # past_key_values = self.get_prompt(batch_size=batch_size)
+        past_key_values = self.get_prompt(prompts)
         prefix_attention_mask = torch.ones(batch_size, self.pre_seq_len).to(
             self.bert.device
         )

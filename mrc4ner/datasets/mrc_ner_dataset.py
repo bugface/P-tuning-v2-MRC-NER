@@ -221,6 +221,12 @@ class MRCNERDatasetPtuning(Dataset):
         self.pad_to_maxlen = pad_to_maxlen
         self.query_len = query_len
 
+        self.label2idx = dict()
+        for x in self.all_data:
+            self.label2idx[x.get("entity_label")] = int(x.get("qas_id").split(".")[-1])
+        
+        print(self.label2idx)
+
     def __len__(self):
         return len(self.all_data)
 
@@ -392,7 +398,7 @@ def run_dataset():
     from torch.utils.data import DataLoader
 
     # zh datasets
-    bert_path = "../../../gatortron_s"
+    bert_path = ""
     vocab_file = os.path.join(bert_path, "vocab.txt")
     # json_path = "/mnt/mrc/zh_msra/mrc-ner.test"
     json_path = "./conll03/mrc-ner.train"
@@ -416,6 +422,9 @@ def run_dataset():
     dataset = MRCNERDatasetPtuning(
         json_path=json_path, tokenizer=tokenizer, is_chinese=is_chinese, query_len=32
     )
+
+    print(dataset.label2idx)
+
     dataloader = DataLoader(
         dataset, batch_size=1, collate_fn=collate_to_max_length_ptuning
     )
