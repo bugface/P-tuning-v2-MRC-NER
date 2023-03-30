@@ -1,19 +1,4 @@
 # A Unified MRC Framework for Named Entity Recognition 
-The repository contains the code of the recent research advances in [Shannon.AI](http://www.shannonai.com). 
-
-**A Unified MRC Framework for Named Entity Recognition** <br>
-Xiaoya Li, Jingrong Feng, Yuxian Meng, Qinghong Han, Fei Wu and Jiwei Li<br>
-In ACL 2020. [paper](https://arxiv.org/abs/1910.11476)<br>
-If you find this repo helpful, please cite the following:
-```latex
-@article{li2019unified,
-  title={A Unified MRC Framework for Named Entity Recognition},
-  author={Li, Xiaoya and Feng, Jingrong and Meng, Yuxian and Han, Qinghong and Wu, Fei and Li, Jiwei},
-  journal={arXiv preprint arXiv:1910.11476},
-  year={2019}
-}
-```
-For any question, please feel free to post Github issues. <br>
 
 ## Install Requirements
 
@@ -26,10 +11,6 @@ For any question, please feel free to post Github issues. <br>
 We build our project on [pytorch-lightning.](https://github.com/PyTorchLightning/pytorch-lightning)
 If you want to know more about the arguments used in our training scripts, please 
 refer to [pytorch-lightning documentation.](https://pytorch-lightning.readthedocs.io/en/latest/)
-
-### Baseline: BERT-Tagger 
-
-We release code, [scripts](./scripts/bert_tagger/reproduce) and [datafiles](./ner2mrc/download.md) for fine-tuning BERT and treating NER as a sequence labeling task. <br>
 
 ### MRC-NER: Prepare Datasets
 
